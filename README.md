@@ -1,5 +1,7 @@
 # A La Renommée - Chaussures THIBAUD
 
+J'ai eu l'opportunité de travailler sur un projet de WebDev consistant à créer un site WEB pour un particulier (ici pour une vente de chaussures) en utilisant le framework TailWindCss.
+
 ## Installation du projet en mode développement
 Une fois que vous avez cloné le git, il suffit de se rendre dans un terminal et de taper :
 ``composer i`` puis ``npm install``
