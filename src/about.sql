@@ -1,0 +1,2 @@
+insert into webdev_semestre4.about (general_terms, timetable)
+values  ('&lt;p&gt;This is a test&lt;/p&gt;', '[{"lundi":[],"mardi":[{"matin":"08h00 - 12h15","aprem":"14h00 - 19h00"}],"mercredi":[{"matin":"08h00 - 12h15","aprem":"14h00 - 19h00"}],"jeudi":[{"matin":"08h00 - 12h15","aprem":"14h00 - 19h00"}],"vendredi":[{"matin":"08h00 - 12h15","aprem":"14h00 - 19h00"}],"samedi":[{"matin":"08h00 - 12h15","aprem":"14h00 - 19h00"}],"dimanche":[]}]');

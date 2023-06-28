@@ -1,0 +1,238 @@
+#!/usr/bin/env php
+<?php
+include $_composer_autoload_path ?? __DIR__ . '/../vendor/autoload.php';
+if ($argv[0] == "bin/install") {
+    if($argv[1] == "--help" || $argv[1] == "-h") {
+        echo "db   db d88888b db      d8888b.      .88b  d88. d88888b d8b   db db    db \n";
+        echo "88   88 88'     88      88  `8D      88'YbdP`88 88'     888o  88 88    88 \n";
+        echo "88ooo88 88ooooo 88      88oodD'      88  88  88 88ooooo 88V8o 88 88    88 \n";
+        echo "88~~~88 88~~~~~ 88      88~~~        88  88  88 88~~~~~ 88 V8o88 88    88 \n";
+        echo "88   88 88.     88      88           88  88  88 88.     88  V888 88b  d88 \n";
+        echo "Y8   88 Y88888P Y88888P 88           YP  YP  YP Y88888P VP   V8P ~Y8888P' \n";
+        echo "Usage: php bin/install [command] [--help | -h] \n";
+        echo "  --help | -h: Display this help message.\n";
+        echo "  --------------------------------------\n";
+        echo "  command: Enter the command you want to run. List of available commands:\n";
+        echo "    - install: Install the application in production mode. This function will execute all the following ones.\n";
+        echo "    - create:database: Create the database from the existing SQL file.\n";
+        echo "    - create:admin: Create the admin in the database.\n";
+        echo "    - import:brands: Import the brands from the CSV file.\n";
+        echo "    - import:colors: Import the colors from the CSV file.\n";
+        echo "    - import:collections: Import the collections from the CSV file.\n";
+        echo "    - import:products: Import the products from the CSV file.\n";
+        exit(0);
+    }
+
+    function loadSQLfile(): bool {
+        $env = (new \Config\Env())->getEnv();
+        $sqlInstructions = file_get_contents(dirname(__DIR__) . '/src/bdd.sql');
+        $dsn = $env['DATABASE_PROTOCOL'] . ":host=" . $env['DATABASE_HOST'] . ";dbname=" . $env['DATABASE_NAME'] . ";charset=" .$env['DATABASE_CHARSET'];
+        $bdd = new PDO($dsn, $env['DATABASE_USERNAME'], $env['DATABASE_PASSWORD']);
+        try {
+            $sql = $bdd->query($sqlInstructions);
+        } catch (PDOException $e) {
+            echo "Error: " . $e->getMessage();
+            return false;
+        }
+        return true;
+    }
+
+    function createAdmin(): bool {
+        $env = (new \Config\Env())->getEnv();
+        $dsn = $env['DATABASE_PROTOCOL'] . ":host=" . $env['DATABASE_HOST'] . ";dbname=" . $env['DATABASE_NAME'] . ";charset=" .$env['DATABASE_CHARSET'] . ";port=" .$env['DATABASE_PORT'];
+        $bdd = new PDO($dsn, $env['DATABASE_USERNAME'], $env['DATABASE_PASSWORD']);
+        $sql = $bdd->prepare("INSERT INTO users (name, surname, password, email, isAdmin) VALUES (:name, :name, :password, :email, :isAdmin)");
+        $str = "Admin";
+        $sql->bindParam(':name', $str);
+        $password_hash = password_hash("admin", PASSWORD_DEFAULT);
+        $sql->bindParam(':password', $password_hash);
+        $str1 = "admin@admin.fr";
+        $sql->bindParam(':email', $str1);
+        $i = 1;
+        $sql->bindParam(':isAdmin', $i);
+        try {
+            $sql->execute();
+        } catch (PDOException $e) {
+            echo "Error: " . $e->getMessage();
+            return false;
+        }
+        return true;
+    }
+
+    function importBrands(): bool {
+        $env = (new \Config\Env())->getEnv();
+        $dsn = $env['DATABASE_PROTOCOL'] . ":host=" . $env['DATABASE_HOST'] . ";dbname=" . $env['DATABASE_NAME'] . ";charset=" .$env['DATABASE_CHARSET'];
+        $bdd = new PDO($dsn, $env['DATABASE_USERNAME'], $env['DATABASE_PASSWORD']);
+        $sql = $bdd->prepare("INSERT INTO brands (name) VALUES (:name)");
+        $file = fopen(dirname(__DIR__) . '/install/brands.csv', 'r');
+        while ($data = fgetcsv($file, null, ";")) {
+            if($data[0 != "id"]) {
+                $sql->bindParam(':name', $data[1]);
+                try {
+                    $sql->execute();
+                } catch (PDOException $e) {
+                    echo "Error: " . $e->getMessage();
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    function importCollections(): bool {
+        $env = (new \Config\Env())->getEnv();
+        $dsn = $env['DATABASE_PROTOCOL'] . ":host=" . $env['DATABASE_HOST'] . ";dbname=" . $env['DATABASE_NAME'] . ";charset=" .$env['DATABASE_CHARSET'];
+        $bdd = new PDO($dsn, $env['DATABASE_USERNAME'], $env['DATABASE_PASSWORD']);
+        $sql = $bdd->prepare("INSERT INTO collection (id_brand) VALUES (:id_brand)");
+        $file = fopen(dirname(__DIR__) . '/install/collections.csv', 'r');
+        while ($data = fgetcsv($file, null, ";")) {
+            if ($data[0] != "id") {
+                $intval = intval($data[1]);
+                $sql->bindParam(':id_brand', $intval);
+                try {
+                    $sql->execute();
+                } catch (PDOException $e) {
+                    echo "Error: " . $e->getMessage();
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    function importColors(): bool {
+        $env = (new \Config\Env())->getEnv();
+        $dsn = $env['DATABASE_PROTOCOL'] . ":host=" . $env['DATABASE_HOST'] . ";dbname=" . $env['DATABASE_NAME'] . ";charset=" .$env['DATABASE_CHARSET'];
+        $bdd = new PDO($dsn, $env['DATABASE_USERNAME'], $env['DATABASE_PASSWORD']);
+        $sql = $bdd->prepare("INSERT INTO colors (name) VALUES (:name)");
+        $file = fopen(dirname(__DIR__) . '/install/colors.csv', 'r');
+        while ($data = fgetcsv($file, null, ";")) {
+           if ($data[0] != "id") {
+               $sql->bindParam(':name', $data[1]);
+               try {
+                   $sql->execute();
+               } catch (PDOException $e) {
+                   echo "Error: " . $e->getMessage();
+                   return false;
+               }
+           }
+        }
+        return true;
+    }
+    
+    function importProducts(): bool {
+        $env = (new \Config\Env())->getEnv();
+        $dsn = $env['DATABASE_PROTOCOL'] . ":host=" . $env['DATABASE_HOST'] . ";dbname=" . $env['DATABASE_NAME'] . ";charset=" .$env['DATABASE_CHARSET'];
+        $bdd = new PDO($dsn, $env['DATABASE_USERNAME'], $env['DATABASE_PASSWORD']);
+        $sql = $bdd->prepare("INSERT INTO products (EAN, name, id_collection, id_color, seize, quantity, unitPrice, unitPriceDiscount) VALUES (:ean, :name, :id_collection, :id_color, :seize, :quantity, :unitPrice, :unitPriceDiscount)");
+        $file = fopen(dirname(__DIR__) . '/install/products.csv', 'r');
+        while ($data = fgetcsv($file, null, ";")) {
+            if ($data[0] != "EAN") {
+                $intval1 = intval($data[1]);
+                $sql->bindParam(':ean', $intval1);
+                $sql->bindParam(':name', $data[2]);
+                $intval = intval($data[3]);
+                $sql->bindParam(':id_collection', $intval);
+                $intval = intval($data[4]);
+                $sql->bindParam(':id_color', $intval);
+                $intval2 = intval($data[5]);
+                $sql->bindParam(':seize', $intval2);
+                $intval3 = intval($data[6]);
+                $sql->bindParam(':quantity', $intval3);
+                $floatval = floatval($data[7]);
+                $sql->bindParam(':unitPrice', $floatval);
+                $floatval1 = floatval($data[8]);
+                $sql->bindParam(':unitPriceDiscount', $floatval1);
+                try {
+                    $sql->execute();
+                } catch (PDOException $e) {
+                    echo "Error: " . $e->getMessage();
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    function install(): bool {
+        if(loadSQLfile()) {
+            if(createAdmin()) {
+                if (importBrands()) {
+                    if (importCollections()) {
+                        if (importColors()) {
+                            if (importProducts()) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    if($argv[1] == 'install') {
+        if(install()) {
+            echo "Installation terminée avec succès\n";
+            echo "Vous pouvez vous connecter au site Internet avec comme identifiant: admin et mot de passe : admin";
+        } else {
+            echo "Installation échouée";
+        }
+        exit(0);
+    }
+
+    if($argv[1] == "create:admin") {
+        if(createAdmin()) {
+            echo "Administrateur créé avec succès\n";
+            echo "Vous pouvez vous connecter au site Internet avec comme email: admin@admin.fr et mot de passe : admin";
+        } else {
+            echo "Administrateur non créé";
+        }
+        exit(0);
+    }
+
+    if ($argv[1] == "create:sql") {
+        if(loadSQLfile()) {
+            echo "Fichier SQL chargé avec succès";
+        } else {
+            echo "Fichier SQL non chargé";
+        }
+        exit(0);
+    }
+
+    if ($argv[1] == "import:brands") {
+        if(importBrands()) {
+            echo "Marques importées avec succès";
+        } else {
+            echo "Marques non importées";
+        }
+        exit(0);
+    }
+
+    if ($argv[1] == "import:collections") {
+        if(importCollections()) {
+            echo "Collections importées avec succès";
+        } else {
+            echo "Collections non importées";
+        }
+        exit(0);
+    }
+
+    if ($argv[1] == "import:colors") {
+        if(importColors()) {
+            echo "Couleurs importées avec succès";
+        } else {
+            echo "Couleurs non importées";
+        }
+        exit(0);
+    }
+
+    if ($argv[1] == "import:products") {
+        if(importProducts()) {
+            echo "Produits importés avec succès";
+        } else {
+            echo "Produits non importés";
+        }
+        exit(0);
+    }
+}

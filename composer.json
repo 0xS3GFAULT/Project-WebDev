@@ -1,0 +1,25 @@
+{
+    "name": "corentinthibaud/projet-webdev-semestre2",
+    "authors": [
+        {
+            "name": "corentinthibaud",
+            "email": "corentin.thibaud@isen.yncrea.fr"
+        },
+        {
+            "name": "qbtl",
+            "email": "quentin.boitel@isen.yncrea.fr"
+        }
+    ],
+    "require": {
+        "altorouter/altorouter": "^2.0",
+        "ext-pdo": "*",
+        "codex-team/editor.js": "dev-master"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/",
+            "Config\\": "config/"
+        }
+    },
+    "bin": ["bin/install"]
+}
